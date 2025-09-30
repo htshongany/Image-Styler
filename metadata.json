@@ -1,0 +1,5 @@
+{
+  "name": "Image Styler",
+  "description": "Transform your images into a new style. Upload an image, choose a default style or define your own using a prompt or a reference image, and let AI generate a unique stylized version.",
+  "requestFramePermissions": []
+}

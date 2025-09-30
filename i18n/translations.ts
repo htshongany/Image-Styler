@@ -1,0 +1,241 @@
+
+export const translations = {
+  en: {
+    // Header
+    appTitle: "Image Styler",
+    language: "Language",
+    english: "English",
+    french: "French",
+    saveTooltip: "Save session (auto-saves)",
+    saveSuccessTooltip: "Session saved!",
+    exportAllTooltip: "Export all as ZIP",
+
+    // Left Panel
+    contentReferenceTitle: "Content Image",
+    contentReferenceTooltip: "The main image to change.",
+    styleReferenceTitle: "Style Image",
+    styleReferenceTooltip: "Use another image's style.",
+    defaultStyleTitle: "Default Style",
+    defaultStyleTooltip: "Pick a ready-made style.",
+    addContent: "Add Content",
+    addStyle: "Add Style",
+    dragAndDrop: "Drag & drop or click",
+    uploadAltText: "Reference",
+    removeImageTooltip: "Remove image",
+    historyTitle: "History",
+    historyEmpty: "Your generated image history will appear here.",
+    historyAriaLabel: (index: number) => `Select variation ${index}`,
+    scrollUpTooltip: "Scroll up",
+    scrollDownTooltip: "Scroll down",
+
+    // Center Panel
+    characterPreview: "Image Preview",
+    characterPreviewDescription: "Upload a content image, then select a style or write a prompt to begin.",
+    copyImageTooltip: "Copy image",
+    useAsContentTooltip: "Use as content",
+    useAsStyleTooltip: "Use as style",
+    downloadImageTooltip: "Download image",
+    previousImageTooltip: "Previous image",
+    nextImageTooltip: "Next image",
+    deleteVariationsTooltip: "Double-click to delete all variations",
+    imageNavigatorStatus: (current: number, total: number) => `Image ${current} of ${total}`,
+    noVariations: "No variations yet",
+    beforeImageAlt: "Before image",
+    afterImageAlt: "After image",
+
+    // Right Panel
+    mainPromptLabel: "Additional Prompt",
+    mainPromptTooltip: "Describe your desired edits.",
+    mainPromptPlaceholder: "e.g., more vibrant, add a hat, make it dark...",
+    mainPromptPlaceholderRequired: "Describe your drawing (required)",
+    negativePromptLabel: "Negative Prompt",
+    negativePromptTooltip: "Things to avoid in the result.",
+    negativePromptPlaceholder: "e.g., blurry, text, watermark...",
+    generateButton: "Generate Image",
+    imageEditorTitle: "Image Editor",
+    editImageButton: "Edit Image",
+    cancelEditButton: "Cancel Edit",
+    brushToolTooltip: "Brush",
+    eraserToolTooltip: "Eraser",
+    brushSizeLabel: "Brush Size",
+    brushColorLabel: "Color",
+    undoTooltip: "Undo",
+    redoTooltip: "Redo",
+
+    // Loader
+    loaderTitle: "Generation in progress...",
+    loaderSubtitle: "This may take a moment.",
+
+    // Notifications / Errors
+    errorTitle: "Error:",
+    uploadCharacterError: "Could not load the content image. Please try another file.",
+    uploadStyleError: "Could not load the style image. Please try another file.",
+    generationFailedError: "Image generation failed. Please check your images or API key and try again.",
+    copyImageFailedError: "Failed to copy image. Your browser might not be compatible.",
+    useAsContentFailedError: "Could not use image as content.",
+    useAsStyleFailedError: "Could not use image as style.",
+    
+    // Constants: Default Styles
+    styles: {
+      anime: "Anime",
+      cyberpunk: "Cyberpunk",
+      watercolor: "Watercolor",
+      pixelArt: "Pixel Art",
+      vintage: "Vintage",
+      cartoon: "Cartoon",
+      fantasyArt: "Fantasy Art",
+      comicBook: "Comic Book",
+      threeDRender: "3D Render",
+      steampunk: "Steampunk",
+      passportPhoto: "Passport Photo",
+      linkedinProfile: "LinkedIn Profile",
+    },
+
+    // FIX: Add missing translations for unused components.
+    // FIX: Add missing translations for ResolutionSelector component.
+    resolutionTitle: "Resolution",
+    resolutionTooltip: "Select the aspect ratio for the generated image. The content image will be padded to fit this ratio.",
+    resolutions: {
+      square: "Square (1:1)",
+      portrait: "Portrait (3:4)",
+      landscape: "Landscape (4:3)",
+      tall_portrait: "Tall Portrait (9:16)",
+      wide_landscape: "Wide Landscape (16:9)",
+    },
+    posesTitle: "Pose",
+    poses: {
+      standing: "Standing",
+      sitting: "Sitting",
+      action: "Action",
+    },
+    expressionsTitle: "Expression",
+    expressions: {
+      neutral: "Neutral",
+      happy: "Happy",
+      surprised: "Surprised",
+    },
+    characterReferenceTitle: "Character Reference",
+    characterReferenceTooltip: "Provide an image of the character you want to generate.",
+    addCharacter: "Add Character",
+  },
+  fr: {
+    // Header
+    appTitle: "Styleur d'Image",
+    language: "Langue",
+    english: "Anglais",
+    french: "Français",
+    saveTooltip: "Sauvegarder (auto)",
+    saveSuccessTooltip: "Session sauvegardée !",
+    exportAllTooltip: "Tout exporter en ZIP",
+
+    // Left Panel
+    contentReferenceTitle: "Image de Contenu",
+    contentReferenceTooltip: "L'image principale à modifier.",
+    styleReferenceTitle: "Image de Style",
+    styleReferenceTooltip: "Utiliser le style d'une autre image.",
+    defaultStyleTitle: "Style par Défaut",
+    defaultStyleTooltip: "Choisir un style prédéfini.",
+    addContent: "Ajouter un contenu",
+    addStyle: "Ajouter un style",
+    dragAndDrop: "Glisser-déposer ou cliquer",
+    uploadAltText: "Référence",
+    removeImageTooltip: "Supprimer l'image",
+    historyTitle: "Historique",
+    historyEmpty: "L'historique des images générées apparaîtra ici.",
+    historyAriaLabel: (index: number) => `Sélectionner la variation ${index}`,
+    scrollUpTooltip: "Défiler vers le haut",
+    scrollDownTooltip: "Défiler vers le bas",
+    
+    // Center Panel
+    characterPreview: "Aperçu de l'image",
+    characterPreviewDescription: "Chargez une image de contenu, puis sélectionnez un style ou écrivez un prompt pour commencer.",
+    copyImageTooltip: "Copier l'image",
+    useAsContentTooltip: "Utiliser comme contenu",
+    useAsStyleTooltip: "Utiliser comme style",
+    downloadImageTooltip: "Télécharger l'image",
+    previousImageTooltip: "Image précédente",
+    nextImageTooltip: "Image suivante",
+    deleteVariationsTooltip: "Double-cliquez pour supprimer toutes les variations",
+    imageNavigatorStatus: (current: number, total: number) => `Image ${current} sur ${total}`,
+    noVariations: "Aucune variation",
+    beforeImageAlt: "Image avant",
+    afterImageAlt: "Image après",
+
+    // Right Panel
+    mainPromptLabel: "Prompt Additionnel",
+    mainPromptTooltip: "Décrivez les modifications souhaitées.",
+    mainPromptPlaceholder: "Ex: plus vibrant, ajouter un chapeau, rendre plus sombre...",
+    mainPromptPlaceholderRequired: "Décrivez votre dessin (obligatoire)",
+    negativePromptLabel: "Prompt Négatif",
+    negativePromptTooltip: "Éléments à éviter dans le résultat.",
+    negativePromptPlaceholder: "Ex: flou, texte, filigrane...",
+    generateButton: "Générer l'image",
+    imageEditorTitle: "Éditeur d'Image",
+    editImageButton: "Modifier l'image",
+    cancelEditButton: "Annuler la modification",
+    brushToolTooltip: "Pinceau",
+    eraserToolTooltip: "Gomme",
+    brushSizeLabel: "Taille du pinceau",
+    brushColorLabel: "Couleur",
+    undoTooltip: "Annuler",
+    redoTooltip: "Rétablir",
+    
+    // Loader
+    loaderTitle: "Génération en cours...",
+    loaderSubtitle: "Cela peut prendre un instant.",
+    
+    // Notifications / Errors
+    errorTitle: "Erreur :",
+    uploadCharacterError: "Impossible de charger l'image de contenu. Veuillez essayer un autre fichier.",
+    uploadStyleError: "Impossible de charger l'image de style. Veuillez essayer un autre fichier.",
+    generationFailedError: "La génération d'image a échoué. Veuillez vérifier vos images ou votre clé API et réessayer.",
+    copyImageFailedError: "La copie de l'image a échoué. Votre navigateur pourrait ne pas être compatible.",
+    useAsContentFailedError: "Impossible d'utiliser l'image comme contenu.",
+    useAsStyleFailedError: "Impossible d'utiliser l'image comme style.",
+    
+    // Constants: Default Styles
+    styles: {
+      anime: "Animé",
+      cyberpunk: "Cyberpunk",
+      watercolor: "Aquarelle",
+      pixelArt: "Pixel Art",
+      vintage: "Vintage",
+      cartoon: "Dessin Animé",
+      fantasyArt: "Art Fantastique",
+      comicBook: "Style BD",
+      threeDRender: "Rendu 3D",
+      steampunk: "Steampunk",
+      passportPhoto: "Photo Passeport",
+      linkedinProfile: "Profil LinkedIn",
+    },
+
+    // FIX: Add missing translations for unused components.
+    // FIX: Add missing translations for ResolutionSelector component.
+    resolutionTitle: "Résolution",
+    resolutionTooltip: "Sélectionnez le rapport d'aspect pour l'image générée. L'image de contenu sera complétée pour s'adapter à ce rapport.",
+    resolutions: {
+      square: "Carré (1:1)",
+      portrait: "Portrait (3:4)",
+      landscape: "Paysage (4:3)",
+      tall_portrait: "Portrait Haut (9:16)",
+      wide_landscape: "Paysage Large (16:9)",
+    },
+    posesTitle: "Pose",
+    poses: {
+      standing: "Debout",
+      sitting: "Assis",
+      action: "Action",
+    },
+    expressionsTitle: "Expression",
+    expressions: {
+      neutral: "Neutre",
+      happy: "Heureux",
+      surprised: "Surpris",
+    },
+    characterReferenceTitle: "Référence du Personnage",
+    characterReferenceTooltip: "Fournissez une image du personnage que vous souhaitez générer.",
+    addCharacter: "Ajouter un personnage",
+  },
+};
+
+export type Translations = typeof translations.en;
