@@ -20,7 +20,7 @@ import { Toast } from './components/Toast';
 type ImageState = { base64: string; mimeType: string; } | null;
 
 type GeneratedImage = {
-  after: string;
+  after: string | 'loading';
   before?: string;
 }
 
@@ -101,7 +101,6 @@ const CenterPanel = React.memo(({ activeView, baseImage, generatedImages, curren
         brushSize={brushSize}
         brushColor={brushColor}
         onCanvasUpdate={onCanvasUpdate}
-        isLoading={isLoading}
       />
     </div>
     <div className="shrink-0 pt-6">
@@ -111,6 +110,7 @@ const CenterPanel = React.memo(({ activeView, baseImage, generatedImages, curren
         onNavigate={onNavigate}
         onReset={onReset}
         disabled={generatedImages.length === 0}
+        isLoading={isLoading}
       />
     </div>
   </main>
@@ -313,7 +313,7 @@ export default function App(): React.ReactElement {
         generatedImages[currentImageIndex]?.after ?? 
         (contentImage ? `data:${contentImage.mimeType};base64,${contentImage.base64}` : null);
         
-      if (imageToStartWith) {
+      if (imageToStartWith && imageToStartWith !== 'loading') {
         setEditHistory([imageToStartWith]);
         setEditHistoryIndex(0);
         setHasUsedBrush(false);
@@ -353,6 +353,11 @@ export default function App(): React.ReactElement {
     
     const wasEditing = isEditing;
     if (isEditing) setIsEditing(false);
+    
+    const loadingIndex = generatedImages.length;
+    const placeholder: GeneratedImage = { after: 'loading' };
+    setGeneratedImages(prev => [...prev, placeholder]);
+    setCurrentImageIndex(loadingIndex);
     setActiveView('preview');
 
     try {
@@ -413,20 +418,28 @@ export default function App(): React.ReactElement {
             const beforeImage = `data:${processedContentImage.mimeType};base64,${processedContentImage.base64}`;
             const afterImage = `data:image/png;base64,${finalImageBase64}`;
 
-            setGeneratedImages(prev => [...prev, { before: beforeImage, after: afterImage }]);
-            setCurrentImageIndex(generatedImages.length);
+            setGeneratedImages(prev => {
+              const newImages = [...prev];
+              newImages[loadingIndex] = { before: beforeImage, after: afterImage };
+              return newImages;
+            });
 
         } else {
             // Text-to-Image flow
             const finalImageBase64 = await generateImage(prompt, selectedResolution.value);
             const afterImage = `data:image/png;base64,${finalImageBase64}`;
-            setGeneratedImages(prev => [...prev, { after: afterImage }]);
-            setCurrentImageIndex(generatedImages.length);
+            setGeneratedImages(prev => {
+              const newImages = [...prev];
+              newImages[loadingIndex] = { after: afterImage };
+              return newImages;
+            });
         }
         setToast({ message: t.generationSuccess, type: 'success' });
     } catch (err) {
         console.error('Error generating image:', err);
         setError(t.generationFailedError);
+        setGeneratedImages(prev => prev.filter((_, index) => index !== loadingIndex));
+        setCurrentImageIndex(Math.max(0, loadingIndex - 1));
     } finally {
         setIsLoading(false);
     }
@@ -453,7 +466,7 @@ export default function App(): React.ReactElement {
 
   const handleCopyImage = useCallback(async (index: number) => {
     const imageToCopy = generatedImages[index]?.after;
-    if (!imageToCopy) return;
+    if (!imageToCopy || imageToCopy === 'loading') return;
 
     try {
       const blob = await (await fetch(imageToCopy)).blob();
@@ -470,7 +483,7 @@ export default function App(): React.ReactElement {
   
   const handleUseAs = useCallback(async (index: number, useAs: 'content' | 'style') => {
       const imageToUse = generatedImages[index]?.after;
-      if (!imageToUse) return;
+      if (!imageToUse || imageToUse === 'loading') return;
       setIsEditing(false);
       try {
           const file = await dataUrlToFile(imageToUse, `${useAs}-${Date.now()}.png`);
@@ -488,7 +501,7 @@ export default function App(): React.ReactElement {
   const handleExportAll = useCallback(async () => {
       if (generatedImages.length === 0) return;
       try {
-          const imagesToExport = generatedImages.map(img => img.after);
+          const imagesToExport = generatedImages.map(img => img.after).filter(img => img !== 'loading') as string[];
           await downloadImagesAsZip(imagesToExport, 'styled-images');
       } catch (err) {
           console.error("Failed to export images:", err);

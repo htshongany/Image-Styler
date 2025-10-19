@@ -5,7 +5,7 @@ import { useTranslations } from '../hooks/useTranslations';
 
 interface ImageDisplayProps {
   baseImage: { base64: string; mimeType: string; } | null;
-  generatedImages: Array<{ after: string; before?: string; }>;
+  generatedImages: Array<{ after: string | 'loading'; before?: string; }>;
   currentIndex: number;
   onCopy: (index: number) => void;
   onUseAsContent: (index: number) => void;
@@ -16,13 +16,12 @@ interface ImageDisplayProps {
   brushSize: number;
   brushColor: string;
   onCanvasUpdate: (dataUrl: string, toolUsed: 'brush' | 'eraser') => void;
-  isLoading: boolean;
 }
 
 const LocalLoader: React.FC = () => {
     const t = useTranslations();
     return (
-        <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-30 backdrop-blur-sm rounded-xl">
+        <div className="flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 border-4 border-t-indigo-600 border-r-indigo-600 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-lg font-semibold text-slate-700">{t.loaderTitle}</p>
         </div>
@@ -42,11 +41,11 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
   editTool,
   brushSize,
   brushColor,
-  onCanvasUpdate,
-  isLoading
+  onCanvasUpdate
 }) => {
   const t = useTranslations();
   const imagePair = generatedImages[currentIndex];
+  const isCurrentlyLoading = imagePair?.after === 'loading';
 
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isSliderDragging, setIsSliderDragging] = useState(false);
@@ -209,7 +208,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
   }, [isEditing, imageToEdit]);
 
   const handleDownload = () => {
-    if (!imagePair) return;
+    if (!imagePair || imagePair.after === 'loading') return;
     const link = document.createElement('a');
     link.href = imagePair.after;
     link.download = `styled-image-${currentIndex + 1}.png`;
@@ -225,8 +224,9 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
         ref={containerRef}
         className={`relative group w-full h-full bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-inner select-none ${isEditing ? 'cursor-none' : ''}`}
     >
-      {isLoading && <LocalLoader />}
-      {finalImageToShow ? (
+      {isCurrentlyLoading ? (
+        <LocalLoader />
+      ) : finalImageToShow ? (
         <>
           <div className="absolute inset-0 flex items-center justify-center">
             <img 

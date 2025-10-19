@@ -9,9 +9,10 @@ interface ImageNavigatorProps {
   onNavigate: (direction: 'next' | 'prev') => void;
   onReset: () => void;
   disabled: boolean;
+  isLoading: boolean;
 }
 
-export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, totalImages, onNavigate, onReset, disabled }) => {
+export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, totalImages, onNavigate, onReset, disabled, isLoading }) => {
   const t = useTranslations();
 
   return (
@@ -45,7 +46,7 @@ export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, to
       <Tooltip text={t.deleteVariationsTooltip}>
         <button 
           onDoubleClick={onReset} 
-          disabled={disabled}
+          disabled={disabled || isLoading}
           className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-100 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
         >
           <IconTrash className="w-5 h-5" />
