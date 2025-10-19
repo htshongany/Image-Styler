@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 
 if (!process.env.API_KEY) {
@@ -33,10 +34,10 @@ export async function editImage(
         parts.push({ text: textPrompt });
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: { parts },
             config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
+                responseModalities: [Modality.IMAGE],
             },
         });
         
@@ -73,8 +74,10 @@ export async function generateImage(textPrompt: string, aspectRatio: "1:1" | "3:
             },
         });
 
-        if (response.generatedImages && response.generatedImages.length > 0) {
-            return response.generatedImages[0].image.imageBytes;
+        const base64ImageBytes: string | undefined = response.generatedImages?.[0]?.image?.imageBytes;
+
+        if (base64ImageBytes) {
+            return base64ImageBytes;
         } else {
             throw new Error("No image data found in the API response.");
         }

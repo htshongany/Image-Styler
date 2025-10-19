@@ -19,7 +19,7 @@ export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, to
       <Tooltip text={t.previousImageTooltip}>
         <button 
           onClick={() => onNavigate('prev')} 
-          disabled={disabled || totalImages < 2}
+          disabled={disabled || currentIndex === 0}
           className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
         >
           <IconArrowLeft className="w-5 h-5" />
@@ -35,7 +35,7 @@ export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, to
       <Tooltip text={t.nextImageTooltip}>
         <button 
           onClick={() => onNavigate('next')} 
-          disabled={disabled || totalImages < 2}
+          disabled={disabled || currentIndex >= totalImages - 1}
           className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
         >
           <IconArrowRight className="w-5 h-5" />

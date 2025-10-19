@@ -13,6 +13,7 @@ interface ImageUploaderProps {
   buttonText: string;
   dropzoneId: string;
   isOptional?: boolean;
+  disabled?: boolean;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({ 
@@ -24,7 +25,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   tooltipText,
   buttonText,
   dropzoneId,
-  isOptional = false
+  isOptional = false,
+  disabled = false,
 }) => {
   const [dragging, setDragging] = useState(false);
   const t = useTranslations();
@@ -57,7 +59,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   return (
-    <div>
+    <div className={disabled ? 'opacity-60' : ''}>
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
         {isOptional && <span className="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Optional</span>}
@@ -82,7 +84,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           <Tooltip text={t.removeImageTooltip}>
             <button 
               onClick={onRemove}
-              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors"
+              disabled={disabled}
+              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors disabled:opacity-50 disabled:hover:bg-transparent"
             >
               <IconX className="w-5 h-5" />
             </button>
@@ -94,17 +97,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 p-6
+          className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg transition-colors duration-200 p-6
           ${
             dragging ? 'border-indigo-400 bg-indigo-50' : 'border-slate-300 bg-white hover:border-indigo-400'
-          }`}
+          }
+          ${disabled ? 'cursor-not-allowed pointer-events-none bg-slate-100' : 'cursor-pointer'}
+          `}
         >
           <div className="flex flex-col items-center justify-center text-slate-500">
             <IconPlus className="w-8 h-8 mb-2 text-slate-400" />
             <p className="text-sm font-semibold">{buttonText}</p>
             <p className="text-xs">{t.dragAndDrop}</p>
           </div>
-          <input id={dropzoneId} type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
+          <input id={dropzoneId} type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} disabled={disabled} />
         </label>
       )}
     </div>

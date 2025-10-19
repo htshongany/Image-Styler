@@ -41,9 +41,26 @@ export function resizeAndPadImage(base64Image: string, targetAspectRatioValue: "
         image.onload = () => {
             const sourceWidth = image.width;
             const sourceHeight = image.height;
-            
+            const sourceAspectRatio = sourceWidth / sourceHeight;
+
             const [targetW, targetH] = targetAspectRatioValue.split(':').map(Number);
             const targetAspectRatio = targetW / targetH;
+
+            // Determine crop dimensions from the source image
+            let sx, sy, sWidth, sHeight;
+            if (sourceAspectRatio > targetAspectRatio) {
+                // Source image is wider than target, crop width
+                sHeight = sourceHeight;
+                sWidth = sourceHeight * targetAspectRatio;
+                sx = (sourceWidth - sWidth) / 2;
+                sy = 0;
+            } else {
+                // Source image is taller than target, crop height
+                sWidth = sourceWidth;
+                sHeight = sourceWidth / targetAspectRatio;
+                sx = 0;
+                sy = (sourceHeight - sHeight) / 2;
+            }
 
             // Define a max dimension for the output canvas for performance and consistency
             const MAX_DIMENSION = 1024;
@@ -70,28 +87,8 @@ export function resizeAndPadImage(base64Image: string, targetAspectRatioValue: "
                 return reject(new Error('Could not get canvas context'));
             }
             
-            // Fill background with white
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-            // Calculate new dimensions for the source image to fit inside the canvas while maintaining aspect ratio
-            const sourceAspectRatio = sourceWidth / sourceHeight;
-            let drawWidth = canvasWidth;
-            let drawHeight = canvasHeight;
-
-            if (sourceAspectRatio > targetAspectRatio) {
-                // Source is wider than target canvas, so fit to canvas width
-                drawHeight = canvasWidth / sourceAspectRatio;
-            } else {
-                // Source is taller than target canvas, so fit to canvas height
-                drawWidth = canvasHeight * sourceAspectRatio;
-            }
-
-            const x = (canvasWidth - drawWidth) / 2;
-            const y = (canvasHeight - drawHeight) / 2;
-
-            // Draw the image onto the new canvas
-            ctx.drawImage(image, x, y, drawWidth, drawHeight);
+            // Draw the cropped part of the source image onto the canvas, resizing it in the process.
+            ctx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, canvasWidth, canvasHeight);
             
             const resultBase64 = canvas.toDataURL('image/png').split(',')[1];
             resolve({ base64: resultBase64, mimeType: 'image/png' });

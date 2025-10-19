@@ -1,31 +1,37 @@
-
 import React, { useState, useCallback, useContext, useEffect, useRef } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { ImageDisplay } from './components/ImageDisplay';
 import { PromptInput } from './components/PromptInput';
 import { StyleSelector } from './components/StyleSelector';
 import { ImageNavigator } from './components/ImageNavigator';
-import { Loader } from './components/Loader';
 import { Tooltip } from './components/Tooltip';
 import { IconSave, IconDownload, IconInfo, IconSlidersHorizontal, IconImage, IconSparkles } from './components/Icons';
-import { editImage } from './services/geminiService';
+import { editImage, generateImage } from './services/geminiService';
 import { fileToBase64, dataUrlToFile, resizeAndPadImage, downloadImagesAsZip } from './utils/fileUtils';
 import { saveState, loadState } from './services/dbService';
-import type { DefaultStyle } from './types';
+import type { DefaultStyle, Resolution } from './types';
 import { useTranslations } from './hooks/useTranslations';
 import { LocaleContext } from './context/LocaleContext';
 import { ImageEditor } from './components/ImageEditor';
+import { ResolutionSelector } from './components/ResolutionSelector';
+import { RESOLUTIONS } from './constants';
+import { Toast } from './components/Toast';
 
 type ImageState = { base64: string; mimeType: string; } | null;
 
 type GeneratedImage = {
-  before: string;
   after: string;
+  before?: string;
 }
 
 type MobileView = 'setup' | 'preview' | 'generate';
 
-const LeftPanel = React.memo(({ activeView, handleContentUpload, handleRemoveContent, contentImage, contentFile, handleStyleUpload, handleRemoveStyle, styleImage, styleFile, handleStyleSelect, selectedStyle }) => {
+type ToastState = {
+  message: string;
+  type: 'success' | 'error';
+} | null;
+
+const LeftPanel = React.memo(({ activeView, handleContentUpload, handleRemoveContent, contentImage, contentFile, handleStyleUpload, handleRemoveStyle, styleImage, styleFile, handleStyleSelect, selectedStyle, isContentMissing, selectedResolution, onResolutionSelect }) => {
   const t = useTranslations();
   return (
      <aside className={`${activeView === 'setup' ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 bg-white lg:border-r lg:border-slate-200 flex-col flex-1 lg:flex-none min-h-0`}>
@@ -39,6 +45,11 @@ const LeftPanel = React.memo(({ activeView, handleContentUpload, handleRemoveCon
             tooltipText={t.contentReferenceTooltip}
             buttonText={t.addContent}
             dropzoneId="content-dropzone"
+            isOptional
+          />
+          <ResolutionSelector
+            selectedResolution={selectedResolution}
+            onResolutionSelect={onResolutionSelect}
           />
           <ImageUploader
             onImageUpload={handleStyleUpload}
@@ -50,6 +61,7 @@ const LeftPanel = React.memo(({ activeView, handleContentUpload, handleRemoveCon
             buttonText={t.addStyle}
             dropzoneId="style-dropzone"
             isOptional
+            disabled={isContentMissing}
           />
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -64,6 +76,7 @@ const LeftPanel = React.memo(({ activeView, handleContentUpload, handleRemoveCon
                 <StyleSelector
                     onStyleSelect={handleStyleSelect}
                     selectedStyle={selectedStyle}
+                    disabled={isContentMissing}
                 />
             </div>
           </div>
@@ -88,6 +101,7 @@ const CenterPanel = React.memo(({ activeView, baseImage, generatedImages, curren
         brushSize={brushSize}
         brushColor={brushColor}
         onCanvasUpdate={onCanvasUpdate}
+        isLoading={isLoading}
       />
     </div>
     <div className="shrink-0 pt-6">
@@ -96,7 +110,7 @@ const CenterPanel = React.memo(({ activeView, baseImage, generatedImages, curren
         totalImages={generatedImages.length}
         onNavigate={onNavigate}
         onReset={onReset}
-        disabled={isLoading || generatedImages.length === 0}
+        disabled={generatedImages.length === 0}
       />
     </div>
   </main>
@@ -105,9 +119,15 @@ const CenterPanel = React.memo(({ activeView, baseImage, generatedImages, curren
 const RightPanel = React.memo(({ 
   activeView, prompt, setPrompt, negativePrompt, setNegativePrompt, onGenerate, canGenerate, 
   isEditing, hasUsedBrush, onToggleEdit, editTool, setEditTool, brushSize, setBrushSize, 
-  brushColor, setBrushColor, editorDisabled, onUndo, onRedo, canUndo, canRedo 
+  brushColor, setBrushColor, editorDisabled, onUndo, onRedo, canUndo, canRedo, isContentMissing
 }) => {
   const t = useTranslations();
+  const placeholderText = isContentMissing
+    ? t.textToImagePlaceholder
+    : isEditing && hasUsedBrush
+    ? t.mainPromptPlaceholderRequired
+    : t.mainPromptPlaceholder;
+
   return (
       <aside className={`${activeView === 'generate' ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 bg-white lg:border-l lg:border-slate-200 flex-col flex-1 lg:flex-none min-h-0`}>
         <PromptInput
@@ -117,7 +137,7 @@ const RightPanel = React.memo(({
           setNegativePrompt={setNegativePrompt}
           onGenerate={onGenerate}
           disabled={!canGenerate}
-          placeholder={isEditing && hasUsedBrush ? t.mainPromptPlaceholderRequired : t.mainPromptPlaceholder}
+          placeholder={placeholderText}
         >
             <ImageEditor
               isEditing={isEditing}
@@ -149,9 +169,11 @@ export default function App(): React.ReactElement {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState<DefaultStyle | null>(null);
+  const [selectedResolution, setSelectedResolution] = useState<Resolution>(RESOLUTIONS[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  const [toast, setToast] = useState<ToastState>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTool, setEditTool] = useState<'brush' | 'eraser'>('brush');
@@ -185,6 +207,7 @@ export default function App(): React.ReactElement {
            setPrompt(saved.prompt || '');
            setNegativePrompt(saved.negativePrompt || '');
            setSelectedStyle(saved.selectedStyle || null);
+           setSelectedResolution(saved.selectedResolution || RESOLUTIONS[0]);
            if (saved.contentFile) {
                setContentFile(saved.contentFile);
            }
@@ -209,14 +232,14 @@ export default function App(): React.ReactElement {
     try {
         await saveState({
             contentImage, styleImage, generatedImages, currentImageIndex,
-            prompt, negativePrompt, selectedStyle, contentFile, styleFile,
+            prompt, negativePrompt, selectedStyle, contentFile, styleFile, selectedResolution,
         });
         setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
         setError("Failed to save session.");
         setSaveStatus('idle'); // Revert on error
     }
-  }, [contentImage, styleImage, generatedImages, currentImageIndex, prompt, negativePrompt, selectedStyle, contentFile, styleFile]);
+  }, [contentImage, styleImage, generatedImages, currentImageIndex, prompt, negativePrompt, selectedStyle, contentFile, styleFile, selectedResolution]);
 
   // Auto-save effect
   useEffect(() => {
@@ -235,7 +258,7 @@ export default function App(): React.ReactElement {
             clearTimeout(debounceSaveRef.current);
         }
     };
-  }, [contentImage, styleImage, generatedImages, currentImageIndex, prompt, negativePrompt, selectedStyle, contentFile, styleFile, handleSaveState]);
+  }, [contentImage, styleImage, generatedImages, currentImageIndex, prompt, negativePrompt, selectedStyle, contentFile, styleFile, selectedResolution, handleSaveState]);
 
   const handleManualSave = () => {
       if (debounceSaveRef.current) {
@@ -325,86 +348,89 @@ export default function App(): React.ReactElement {
   };
 
   const handleGenerate = useCallback(async () => {
-    const editedImageBase64 = editHistory[editHistoryIndex];
-    
-    let sourceImageForGeneration: ImageState = null;
-
-    if (isEditing && editedImageBase64) {
-        sourceImageForGeneration = { base64: editedImageBase64.split(',')[1], mimeType: 'image/png' };
-    } else {
-        // Default behavior: always use the original content image unless in edit mode.
-        sourceImageForGeneration = contentImage;
-    }
-        
-    if (!sourceImageForGeneration || (!styleImage && !selectedStyle && !prompt.trim())) return;
-
     setIsLoading(true);
     setError(null);
-
-    if (isEditing) {
-      setIsEditing(false);
-    }
     
-    setActiveView('preview'); // Switch to preview on mobile after generating
+    const wasEditing = isEditing;
+    if (isEditing) setIsEditing(false);
+    setActiveView('preview');
 
     try {
-      const buildFinalPrompt = () => {
-        const promptParts: string[] = ["# Primary Goal\nRedraw the provided content image."];
-        if (isEditing) {
-          promptParts.push("The content image has been manually edited. IMPORTANT: Treat these edits (drawings or erasures) as a compositional guide for shape and placement, NOT as a style reference. Your task is to intelligently interpret these edits and seamlessly integrate them into the final image, ensuring the result strictly adheres to the primary artistic style (defined by the style image or prompt). For example, if a colorful line is drawn on a black-and-white photo, the resulting feature should be rendered in black-and-white. The text prompt is the ultimate authority; if it specifies colors or details, those instructions override the drawing. Fill any erased (transparent) areas in a way that is consistent with the scene and style.");
+        let sourceImageForGeneration: ImageState = null;
+        const isEditingActive = wasEditing && editHistory[editHistoryIndex];
+
+        if (isEditingActive) {
+            const editedImageBase64 = editHistory[editHistoryIndex];
+            sourceImageForGeneration = { base64: editedImageBase64.split(',')[1], mimeType: 'image/png' };
+        } else if (contentImage) {
+            sourceImageForGeneration = contentImage;
         }
 
-        let styleInstruction = "";
-        let modifications = "";
-    
-        if (styleImage) {
-            styleInstruction = "Your main objective is to meticulously adopt the artistic style, color palette, and texture from the second input image (the style reference). Replicate its visual essence onto the content image.";
-            if (prompt.trim()) {
-                modifications = `Incorporate the following changes: "${prompt.trim()}".`;
-            }
-        } else if (selectedStyle) {
-            styleInstruction = `Apply the following artistic style: "${selectedStyle.prompt}". Meticulously adhere to this style description.`;
-            if (prompt.trim()) {
-                modifications = `Incorporate the following changes: "${prompt.trim()}".`;
-            }
-        } else if (prompt.trim()) {
-            styleInstruction = `Apply the following artistic style: "${prompt.trim()}". Your main objective is to faithfully recreate the visual characteristics of this style.`;
-        }
-    
-        if (styleInstruction) {
-            promptParts.push(`# Style Instructions\n${styleInstruction}`);
-        }
-    
-        if (modifications) {
-            promptParts.push(`# Specific Modifications\n${modifications}`);
-        }
-        
-        if (negativePrompt.trim()) {
-            promptParts.push(`# Elements to Avoid\nStrictly avoid including any of the following: "${negativePrompt.trim()}".`);
-        }
-    
-        return promptParts.join('\n\n');
-      };
+        if (sourceImageForGeneration) {
+            // Image-to-Image flow (covers editing and standard i2i)
+            const buildFinalPrompt = () => {
+                const promptParts: string[] = ["# Primary Goal\nRedraw the provided content image."];
+                if (wasEditing) {
+                    promptParts.push("The content image has been manually edited. IMPORTANT: Treat these edits (drawings or erasures) as a compositional guide for shape and placement, NOT as a style reference. Your task is to intelligently interpret these edits and seamlessly integrate them into the final image, ensuring the result strictly adheres to the primary artistic style (defined by the style image or prompt). For example, if a colorful line is drawn on a black-and-white photo, the resulting feature should be rendered in black-and-white. The text prompt is the ultimate authority; if it specifies colors or details, those instructions override the drawing. Fill any erased (transparent) areas in a way that is consistent with the scene and style.");
+                }
 
-      const finalPrompt = buildFinalPrompt();
-      
-      const processedContentImage = await resizeAndPadImage(sourceImageForGeneration.base64, "1:1");
-        
-      const finalImageBase64 = await editImage(processedContentImage, finalPrompt, styleImage ?? undefined);
-      
-      const beforeImage = `data:${processedContentImage.mimeType};base64,${processedContentImage.base64}`;
-      const afterImage = `data:image/png;base64,${finalImageBase64}`;
+                let styleInstruction = "";
+                let modifications = "";
 
-      setGeneratedImages(prev => [...prev, { before: beforeImage, after: afterImage }]);
-      setCurrentImageIndex(generatedImages.length);
+                if (styleImage) {
+                    styleInstruction = "Your main objective is to meticulously adopt the artistic style, color palette, and texture from the second input image (the style reference). Replicate its visual essence onto the content image.";
+                    if (prompt.trim()) {
+                        modifications = `Incorporate the following changes: "${prompt.trim()}".`;
+                    }
+                } else if (selectedStyle) {
+                    styleInstruction = `Apply the following artistic style: "${selectedStyle.prompt}". Meticulously adhere to this style description.`;
+                    if (prompt.trim()) {
+                        modifications = `Incorporate the following changes: "${prompt.trim()}".`;
+                    }
+                } else if (prompt.trim()) {
+                    styleInstruction = `Apply the following artistic style: "${prompt.trim()}". Your main objective is to faithfully recreate the visual characteristics of this style.`;
+                }
 
+                if (styleInstruction) {
+                    promptParts.push(`# Style Instructions\n${styleInstruction}`);
+                }
+
+                if (modifications) {
+                    promptParts.push(`# Specific Modifications\n${modifications}`);
+                }
+
+                if (negativePrompt.trim()) {
+                    promptParts.push(`# Elements to Avoid\nStrictly avoid including any of the following: "${negativePrompt.trim()}".`);
+                }
+
+                return promptParts.join('\n\n');
+            };
+
+            const finalPrompt = buildFinalPrompt();
+            const processedContentImage = await resizeAndPadImage(sourceImageForGeneration.base64, selectedResolution.value);
+            const finalImageBase64 = await editImage(processedContentImage, finalPrompt, styleImage ?? undefined);
+            
+            const beforeImage = `data:${processedContentImage.mimeType};base64,${processedContentImage.base64}`;
+            const afterImage = `data:image/png;base64,${finalImageBase64}`;
+
+            setGeneratedImages(prev => [...prev, { before: beforeImage, after: afterImage }]);
+            setCurrentImageIndex(generatedImages.length);
+
+        } else {
+            // Text-to-Image flow
+            const finalImageBase64 = await generateImage(prompt, selectedResolution.value);
+            const afterImage = `data:image/png;base64,${finalImageBase64}`;
+            setGeneratedImages(prev => [...prev, { after: afterImage }]);
+            setCurrentImageIndex(generatedImages.length);
+        }
+        setToast({ message: t.generationSuccess, type: 'success' });
     } catch (err) {
-      console.error('Error generating image:', err);
-      setError(t.generationFailedError);
+        console.error('Error generating image:', err);
+        setError(t.generationFailedError);
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  }, [contentImage, styleImage, prompt, negativePrompt, isLoading, selectedStyle, generatedImages, currentImageIndex, t, isEditing, editHistory, editHistoryIndex]);
+  }, [contentImage, styleImage, prompt, negativePrompt, selectedStyle, t, isEditing, editHistory, editHistoryIndex, selectedResolution, generatedImages.length]);
 
   const handleNavigate = (direction: 'next' | 'prev') => {
     setIsEditing(false);
@@ -471,13 +497,20 @@ export default function App(): React.ReactElement {
   }, [generatedImages]);
 
   const canGenerate = (() => {
-    const hasSource = !isLoading && (isEditing ? editHistory.length > 0 : !!contentImage);
+    if (isLoading) return false;
+
+    // Text-to-image flow
+    if (!contentImage) {
+        return prompt.trim().length > 0;
+    }
+
+    // Image-to-image flow
+    const hasSource = isEditing ? editHistory.length > 0 : !!contentImage;
     if (!hasSource) return false;
     
     const hasStyleMethod = !!styleImage || !!selectedStyle || prompt.trim().length > 0;
     if (!hasStyleMethod) return false;
 
-    // If brush has been used, prompt is mandatory
     if (isEditing && hasUsedBrush) {
         return prompt.trim().length > 0;
     }
@@ -485,13 +518,13 @@ export default function App(): React.ReactElement {
     return true;
   })();
   
-  const editorDisabled = !contentImage && generatedImages.length === 0;
+  const editorDisabled = isLoading || (!contentImage && generatedImages.length === 0);
   const canUndo = editHistoryIndex > 0;
   const canRedo = editHistoryIndex < editHistory.length - 1;
 
   return (
     <div className="h-screen bg-slate-50 font-sans flex flex-col antialiased">
-      {isLoading && <Loader />}
+      <Toast toast={toast} onClose={() => setToast(null)} />
       
       <header className="bg-white shadow-sm border-b border-slate-200 px-4 sm:px-6 py-3 shrink-0 z-10">
         <div className="flex items-center justify-between">
@@ -549,6 +582,9 @@ export default function App(): React.ReactElement {
           styleFile={styleFile}
           handleStyleSelect={handleStyleSelect}
           selectedStyle={selectedStyle}
+          isContentMissing={!contentImage}
+          selectedResolution={selectedResolution}
+          onResolutionSelect={setSelectedResolution}
         />
         <CenterPanel 
           activeView={activeView}
@@ -590,6 +626,7 @@ export default function App(): React.ReactElement {
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
+          isContentMissing={!contentImage}
         />
       </div>
 

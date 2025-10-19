@@ -5,7 +5,7 @@ import { useTranslations } from '../hooks/useTranslations';
 
 interface ImageDisplayProps {
   baseImage: { base64: string; mimeType: string; } | null;
-  generatedImages: Array<{ before: string; after: string; }>;
+  generatedImages: Array<{ after: string; before?: string; }>;
   currentIndex: number;
   onCopy: (index: number) => void;
   onUseAsContent: (index: number) => void;
@@ -16,7 +16,19 @@ interface ImageDisplayProps {
   brushSize: number;
   brushColor: string;
   onCanvasUpdate: (dataUrl: string, toolUsed: 'brush' | 'eraser') => void;
+  isLoading: boolean;
 }
+
+const LocalLoader: React.FC = () => {
+    const t = useTranslations();
+    return (
+        <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-30 backdrop-blur-sm rounded-xl">
+            <div className="w-12 h-12 border-4 border-t-indigo-600 border-r-indigo-600 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-lg font-semibold text-slate-700">{t.loaderTitle}</p>
+        </div>
+    );
+};
+
 
 export const ImageDisplay: React.FC<ImageDisplayProps> = ({ 
   baseImage,
@@ -30,7 +42,8 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
   editTool,
   brushSize,
   brushColor,
-  onCanvasUpdate
+  onCanvasUpdate,
+  isLoading
 }) => {
   const t = useTranslations();
   const imagePair = generatedImages[currentIndex];
@@ -212,6 +225,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
         ref={containerRef}
         className={`relative group w-full h-full bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-inner select-none ${isEditing ? 'cursor-none' : ''}`}
     >
+      {isLoading && <LocalLoader />}
       {finalImageToShow ? (
         <>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -222,7 +236,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
             />
           </div>
           
-          {!isEditing && imagePair && (
+          {!isEditing && imagePair?.before && (
              <div 
                 className="absolute inset-0 flex items-center justify-center"
                 style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}
@@ -247,7 +261,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
             />
           )}
 
-          {!isEditing && imagePair && (
+          {!isEditing && imagePair?.before && (
             <div
               className="absolute inset-y-0 w-8 -translate-x-1/2 cursor-ew-resize group/handle z-10 touch-none"
               style={{ left: `${sliderPosition}%` }}
@@ -280,7 +294,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
               />
           )}
           
-          {!isEditing && imagePair && (
+          {imagePair && (
             <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20 backdrop-blur-sm p-2 rounded-xl">
               <Tooltip text={t.copyImageTooltip} position="left">
                 <button

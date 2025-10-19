@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     // Header
@@ -48,6 +47,7 @@ export const translations = {
     mainPromptTooltip: "Describe your desired edits.",
     mainPromptPlaceholder: "e.g., more vibrant, add a hat, make it dark...",
     mainPromptPlaceholderRequired: "Describe your drawing (required)",
+    textToImagePlaceholder: "Describe the image you want to create...",
     negativePromptLabel: "Negative Prompt",
     negativePromptTooltip: "Things to avoid in the result.",
     negativePromptPlaceholder: "e.g., blurry, text, watermark...",
@@ -71,6 +71,7 @@ export const translations = {
     uploadCharacterError: "Could not load the content image. Please try another file.",
     uploadStyleError: "Could not load the style image. Please try another file.",
     generationFailedError: "Image generation failed. Please check your images or API key and try again.",
+    generationSuccess: "Image generated successfully!",
     copyImageFailedError: "Failed to copy image. Your browser might not be compatible.",
     useAsContentFailedError: "Could not use image as content.",
     useAsStyleFailedError: "Could not use image as style.",
@@ -94,7 +95,7 @@ export const translations = {
     // FIX: Add missing translations for unused components.
     // FIX: Add missing translations for ResolutionSelector component.
     resolutionTitle: "Resolution",
-    resolutionTooltip: "Select the aspect ratio for the generated image. The content image will be padded to fit this ratio.",
+    resolutionTooltip: "Select the aspect ratio for the generated image. The content image will be cropped to fit this ratio.",
     resolutions: {
       square: "Square (1:1)",
       portrait: "Portrait (3:4)",
@@ -166,6 +167,7 @@ export const translations = {
     mainPromptTooltip: "Décrivez les modifications souhaitées.",
     mainPromptPlaceholder: "Ex: plus vibrant, ajouter un chapeau, rendre plus sombre...",
     mainPromptPlaceholderRequired: "Décrivez votre dessin (obligatoire)",
+    textToImagePlaceholder: "Décrivez l'image que vous souhaitez créer...",
     negativePromptLabel: "Prompt Négatif",
     negativePromptTooltip: "Éléments à éviter dans le résultat.",
     negativePromptPlaceholder: "Ex: flou, texte, filigrane...",
@@ -189,6 +191,7 @@ export const translations = {
     uploadCharacterError: "Impossible de charger l'image de contenu. Veuillez essayer un autre fichier.",
     uploadStyleError: "Impossible de charger l'image de style. Veuillez essayer un autre fichier.",
     generationFailedError: "La génération d'image a échoué. Veuillez vérifier vos images ou votre clé API et réessayer.",
+    generationSuccess: "Image générée avec succès !",
     copyImageFailedError: "La copie de l'image a échoué. Votre navigateur pourrait ne pas être compatible.",
     useAsContentFailedError: "Impossible d'utiliser l'image comme contenu.",
     useAsStyleFailedError: "Impossible d'utiliser l'image comme style.",
@@ -212,7 +215,7 @@ export const translations = {
     // FIX: Add missing translations for unused components.
     // FIX: Add missing translations for ResolutionSelector component.
     resolutionTitle: "Résolution",
-    resolutionTooltip: "Sélectionnez le rapport d'aspect pour l'image générée. L'image de contenu sera complétée pour s'adapter à ce rapport.",
+    resolutionTooltip: "Sélectionnez le rapport d'aspect pour l'image générée. L'image de contenu sera rognée pour s'adapter à ce rapport.",
     resolutions: {
       square: "Carré (1:1)",
       portrait: "Portrait (3:4)",
