@@ -1,8 +1,6 @@
 import React from 'react';
 import type { Resolution } from '../types';
 import { RESOLUTIONS } from '../constants';
-import { Tooltip } from './Tooltip';
-import { IconInfo } from './Icons';
 import { useTranslations } from '../hooks/useTranslations';
 
 interface ResolutionSelectorProps {
@@ -24,11 +22,6 @@ export const ResolutionSelector: React.FC<ResolutionSelectorProps> = ({ onResolu
     <div>
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-lg font-semibold text-slate-800">{t.resolutionTitle}</h3>
-        <Tooltip text={t.resolutionTooltip}>
-          <span className="text-slate-400 hover:text-slate-600 cursor-help">
-            <IconInfo className="w-4 h-4" />
-          </span>
-        </Tooltip>
       </div>
       
       <select

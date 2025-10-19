@@ -17,15 +17,14 @@ export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, to
 
   return (
     <div className={`flex items-center justify-between w-full max-w-md mx-auto p-1 bg-white border border-slate-200 rounded-lg ${disabled ? 'opacity-50' : ''}`}>
-      <Tooltip text={t.previousImageTooltip}>
-        <button 
-          onClick={() => onNavigate('prev')} 
-          disabled={disabled || currentIndex === 0}
-          className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
-        >
-          <IconArrowLeft className="w-5 h-5" />
-        </button>
-      </Tooltip>
+      <button 
+        onClick={() => onNavigate('prev')} 
+        disabled={disabled || currentIndex === 0}
+        className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
+        aria-label={t.previousImageTooltip}
+      >
+        <IconArrowLeft className="w-5 h-5" />
+      </button>
 
       <div className="px-3">
         <span className="text-sm font-medium text-slate-700">
@@ -33,15 +32,14 @@ export const ImageNavigator: React.FC<ImageNavigatorProps> = ({ currentIndex, to
         </span>
       </div>
 
-      <Tooltip text={t.nextImageTooltip}>
-        <button 
-          onClick={() => onNavigate('next')} 
-          disabled={disabled || currentIndex >= totalImages - 1}
-          className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
-        >
-          <IconArrowRight className="w-5 h-5" />
-        </button>
-      </Tooltip>
+      <button 
+        onClick={() => onNavigate('next')} 
+        disabled={disabled || currentIndex >= totalImages - 1}
+        className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-md disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent transition-colors"
+        aria-label={t.nextImageTooltip}
+      >
+        <IconArrowRight className="w-5 h-5" />
+      </button>
       
       <Tooltip text={t.deleteVariationsTooltip}>
         <button 
