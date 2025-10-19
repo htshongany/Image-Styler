@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality } from "@google/genai";
 
 if (!process.env.API_KEY) {
@@ -41,24 +40,29 @@ export async function editImage(
             },
         });
         
-        const imagePart = response.candidates?.[0]?.content?.parts.find(part => part.inlineData);
+        if (!response.candidates || response.candidates.length === 0) {
+            if (response.promptFeedback?.blockReason) {
+                throw new Error(`Request blocked: ${response.promptFeedback.blockReason}. Please adjust your prompt or image.`);
+            }
+            throw new Error("Request was blocked due to safety policies (e.g., explicit content). Please adjust your prompt or image.");
+        }
+        
+        const imagePart = response.candidates[0].content?.parts.find(part => part.inlineData);
 
         if (imagePart && imagePart.inlineData) {
             return imagePart.inlineData.data;
         } else {
             const textResponse = response.text?.trim();
             if (textResponse) {
-                throw new Error(`API returned text instead of an image: ${textResponse}`);
+                throw new Error(textResponse);
             }
-            throw new Error("No image data found in the API response.");
+            throw new Error("No image data found in the API response. The model may have refused to generate the content.");
         }
 
     } catch (error) {
         console.error("Error calling Gemini API for image editing:", error);
-        if (error instanceof Error) {
-            throw new Error(`Gemini API Error: ${error.message}`);
-        }
-        throw new Error("An unknown error occurred while communicating with the Gemini API.");
+        // Rethrow the original error to preserve its properties (like message and stack)
+        throw error;
     }
 }
 
@@ -79,14 +83,12 @@ export async function generateImage(textPrompt: string, aspectRatio: "1:1" | "3:
         if (base64ImageBytes) {
             return base64ImageBytes;
         } else {
-            throw new Error("No image data found in the API response.");
+            throw new Error("The request was processed, but no images were returned. This may be due to safety filters. Please try a different prompt.");
         }
 
     } catch (error) {
         console.error("Error calling Gemini API for image generation:", error);
-        if (error instanceof Error) {
-            throw new Error(`Gemini API Error: ${error.message}`);
-        }
-        throw new Error("An unknown error occurred while communicating with the Gemini API.");
+        // Rethrow the original error
+        throw error;
     }
 }

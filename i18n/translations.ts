@@ -70,11 +70,14 @@ export const translations = {
     errorTitle: "Error:",
     uploadCharacterError: "Could not load the content image. Please try another file.",
     uploadStyleError: "Could not load the style image. Please try another file.",
-    generationFailedError: "Image generation failed. Please check your images or API key and try again.",
+    generationFailedError: "Image generation failed. Please adjust your prompt or check your connection and try again.",
     generationSuccess: "Image generated successfully!",
     copyImageFailedError: "Failed to copy image. Your browser might not be compatible.",
     useAsContentFailedError: "Could not use image as content.",
     useAsStyleFailedError: "Could not use image as style.",
+    loadSessionError: "Could not load saved session.",
+    saveSessionError: "Failed to save session.",
+    exportZipError: "Failed to create ZIP file.",
     
     // Constants: Default Styles
     styles: {
@@ -190,11 +193,14 @@ export const translations = {
     errorTitle: "Erreur :",
     uploadCharacterError: "Impossible de charger l'image de contenu. Veuillez essayer un autre fichier.",
     uploadStyleError: "Impossible de charger l'image de style. Veuillez essayer un autre fichier.",
-    generationFailedError: "La génération d'image a échoué. Veuillez vérifier vos images ou votre clé API et réessayer.",
+    generationFailedError: "La génération d'image a échoué. Veuillez ajuster votre prompt ou vérifier votre connexion et réessayer.",
     generationSuccess: "Image générée avec succès !",
     copyImageFailedError: "La copie de l'image a échoué. Votre navigateur pourrait ne pas être compatible.",
     useAsContentFailedError: "Impossible d'utiliser l'image comme contenu.",
     useAsStyleFailedError: "Impossible d'utiliser l'image comme style.",
+    loadSessionError: "Impossible de charger la session sauvegardée.",
+    saveSessionError: "Échec de la sauvegarde de la session.",
+    exportZipError: "La création du fichier ZIP a échoué.",
     
     // Constants: Default Styles
     styles: {

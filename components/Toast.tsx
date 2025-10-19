@@ -40,7 +40,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
     >
       <div className={`inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg 
         ${isSuccess ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-        {isSuccess && <IconCheck className="w-5 h-5" />}
+        {isSuccess ? <IconCheck className="w-5 h-5" /> : <IconX className="w-5 h-5" />}
       </div>
       <div className="ml-3 text-sm font-medium">{toast.message}</div>
       <button

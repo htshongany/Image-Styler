@@ -171,7 +171,6 @@ export default function App(): React.ReactElement {
   const [selectedStyle, setSelectedStyle] = useState<DefaultStyle | null>(null);
   const [selectedResolution, setSelectedResolution] = useState<Resolution>(RESOLUTIONS[0]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const [toast, setToast] = useState<ToastState>(null);
 
@@ -217,7 +216,7 @@ export default function App(): React.ReactElement {
         }
       } catch (err) {
         console.error("Failed to load state from DB", err);
-        setError("Could not load saved session.");
+        setToast({ message: t.loadSessionError, type: 'error' });
       } finally {
         setIsLoading(false);
         // Set initial load to false after attempting to load
@@ -225,7 +224,7 @@ export default function App(): React.ReactElement {
       }
     };
     initState();
-  }, []);
+  }, [t]);
 
   const handleSaveState = useCallback(async () => {
     setSaveStatus('saved');
@@ -236,10 +235,10 @@ export default function App(): React.ReactElement {
         });
         setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
-        setError("Failed to save session.");
+        setToast({ message: t.saveSessionError, type: 'error' });
         setSaveStatus('idle'); // Revert on error
     }
-  }, [contentImage, styleImage, generatedImages, currentImageIndex, prompt, negativePrompt, selectedStyle, contentFile, styleFile, selectedResolution]);
+  }, [contentImage, styleImage, generatedImages, currentImageIndex, prompt, negativePrompt, selectedStyle, contentFile, styleFile, selectedResolution, t]);
 
   // Auto-save effect
   useEffect(() => {
@@ -269,15 +268,14 @@ export default function App(): React.ReactElement {
 
   const handleContentUpload = useCallback(async (file: File) => {
     try {
-      setError(null);
       const { base64 } = await fileToBase64(file);
       setContentImage({ base64, mimeType: file.type });
       setContentFile(file);
     } catch (err) {
       console.error('Error converting file:', err);
-      setError(t.uploadCharacterError);
+      setToast({ message: t.uploadCharacterError, type: 'error' });
     }
-  }, [t.uploadCharacterError]);
+  }, [t]);
 
   const handleRemoveContent = () => {
     setContentImage(null);
@@ -286,15 +284,14 @@ export default function App(): React.ReactElement {
   
   const handleStyleUpload = useCallback(async (file: File) => {
     try {
-      setError(null);
       const { base64 } = await fileToBase64(file);
       setStyleImage({ base64, mimeType: file.type });
       setStyleFile(file);
     } catch (err) {
       console.error('Error converting style file:', err);
-      setError(t.uploadStyleError);
+      setToast({ message: t.uploadStyleError, type: 'error' });
     }
-  }, [t.uploadStyleError]);
+  }, [t]);
 
   const handleRemoveStyle = () => {
     setStyleImage(null);
@@ -349,7 +346,6 @@ export default function App(): React.ReactElement {
 
   const handleGenerate = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
     
     const wasEditing = isEditing;
     if (isEditing) setIsEditing(false);
@@ -437,7 +433,8 @@ export default function App(): React.ReactElement {
         setToast({ message: t.generationSuccess, type: 'success' });
     } catch (err) {
         console.error('Error generating image:', err);
-        setError(t.generationFailedError);
+        const errorMessage = err instanceof Error ? err.message : t.generationFailedError;
+        setToast({ message: errorMessage, type: 'error' });
         setGeneratedImages(prev => prev.filter((_, index) => index !== loadingIndex));
         setCurrentImageIndex(Math.max(0, loadingIndex - 1));
     } finally {
@@ -477,9 +474,9 @@ export default function App(): React.ReactElement {
       ]);
     } catch (err) {
       console.error('Failed to copy image:', err);
-      setError(t.copyImageFailedError);
+      setToast({ message: t.copyImageFailedError, type: 'error' });
     }
-  }, [generatedImages, t.copyImageFailedError]);
+  }, [generatedImages, t]);
   
   const handleUseAs = useCallback(async (index: number, useAs: 'content' | 'style') => {
       const imageToUse = generatedImages[index]?.after;
@@ -494,9 +491,10 @@ export default function App(): React.ReactElement {
           }
       } catch (err) {
           console.error(`Failed to use image as ${useAs}:`, err);
-          setError(useAs === 'content' ? t.useAsContentFailedError : t.useAsStyleFailedError);
+          const message = useAs === 'content' ? t.useAsContentFailedError : t.useAsStyleFailedError;
+          setToast({ message, type: 'error' });
       }
-  }, [generatedImages, handleContentUpload, handleStyleUpload, t.useAsContentFailedError, t.useAsStyleFailedError]);
+  }, [generatedImages, handleContentUpload, handleStyleUpload, t]);
 
   const handleExportAll = useCallback(async () => {
       if (generatedImages.length === 0) return;
@@ -505,9 +503,9 @@ export default function App(): React.ReactElement {
           await downloadImagesAsZip(imagesToExport, 'styled-images');
       } catch (err) {
           console.error("Failed to export images:", err);
-          setError("Failed to create ZIP file.");
+          setToast({ message: t.exportZipError, type: 'error' });
       }
-  }, [generatedImages]);
+  }, [generatedImages, t]);
 
   const canGenerate = (() => {
     if (isLoading) return false;
