@@ -1,5 +1,4 @@
 import type { Expression, Pose, Resolution, DefaultStyle } from './types';
-// FIX: Import icons for use in POSES and EXPRESSIONS constants.
 import { IconInfo, IconPlus, IconX } from './components/Icons';
 
 export const RESOLUTIONS: Resolution[] = [
@@ -89,14 +88,12 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
 ];
 
 
-// FIX: Add missing POSES constant for unused PoseSelector component.
 export const POSES: Pose[] = [
     { id: 'standing', icon: IconPlus },
     { id: 'sitting', icon: IconX },
     { id: 'action', icon: IconInfo },
 ];
 
-// FIX: Add missing EXPRESSIONS constant for unused ExpressionSelector component.
 export const EXPRESSIONS: Expression[] = [
     { id: 'neutral', icon: IconPlus },
     { id: 'happy', icon: IconX },

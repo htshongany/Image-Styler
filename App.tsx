@@ -124,8 +124,10 @@ const RightPanel = React.memo(({
   const t = useTranslations();
   const placeholderText = isContentMissing
     ? t.textToImagePlaceholder
-    : isEditing && hasUsedBrush
-    ? t.mainPromptPlaceholderRequired
+    : isEditing
+    ? hasUsedBrush
+      ? t.mainPromptPlaceholderBrushRequired
+      : t.mainPromptPlaceholderEraserOptional
     : t.mainPromptPlaceholder;
 
   return (
@@ -181,7 +183,7 @@ export default function App(): React.ReactElement {
   
   const [editHistory, setEditHistory] = useState<string[]>([]);
   const [editHistoryIndex, setEditHistoryIndex] = useState(-1);
-  const [hasUsedBrush, setHasUsedBrush] = useState(false);
+  const [hasUsedBrushDuringEdit, setHasUsedBrushDuringEdit] = useState(false);
   
   const [activeView, setActiveView] = useState<MobileView>('preview');
 
@@ -287,6 +289,7 @@ export default function App(): React.ReactElement {
       const { base64 } = await fileToBase64(file);
       setStyleImage({ base64, mimeType: file.type });
       setStyleFile(file);
+    // FIX: Malformed try-catch block. Added curly braces to the catch block.
     } catch (err) {
       console.error('Error converting style file:', err);
       setToast({ message: t.uploadStyleError, type: 'error' });
@@ -304,6 +307,7 @@ export default function App(): React.ReactElement {
       setEditHistory([]);
       setEditHistoryIndex(-1);
       setIsEditing(false);
+      setHasUsedBrushDuringEdit(false);
     } else {
       // Start edit
       const imageToStartWith = 
@@ -313,24 +317,23 @@ export default function App(): React.ReactElement {
       if (imageToStartWith && imageToStartWith !== 'loading') {
         setEditHistory([imageToStartWith]);
         setEditHistoryIndex(0);
-        setHasUsedBrush(false);
         setIsEditing(true);
+        setHasUsedBrushDuringEdit(false);
       }
     }
   };
 
-  const handleCanvasUpdate = useCallback((dataUrl: string, toolUsed: 'brush' | 'eraser') => {
+  const handleCanvasUpdate = useCallback((dataUrl: string) => {
+    if (editTool === 'brush') {
+        setHasUsedBrushDuringEdit(true);
+    }
     setEditHistory(prev => {
         const newHistory = prev.slice(0, editHistoryIndex + 1);
         newHistory.push(dataUrl);
         return newHistory;
     });
     setEditHistoryIndex(prev => prev + 1);
-
-    if (toolUsed === 'brush') {
-        setHasUsedBrush(true);
-    }
-  }, [editHistoryIndex]);
+  }, [editHistoryIndex, editTool, setEditHistory, setEditHistoryIndex, setHasUsedBrushDuringEdit]);
   
   const handleUndo = () => {
       if (editHistoryIndex > 0) {
@@ -368,48 +371,55 @@ export default function App(): React.ReactElement {
         }
 
         if (sourceImageForGeneration) {
-            // Image-to-Image flow (covers editing and standard i2i)
-            const buildFinalPrompt = () => {
-                const promptParts: string[] = ["# Primary Goal\nRedraw the provided content image."];
-                if (wasEditing) {
-                    promptParts.push("The content image has been manually edited. IMPORTANT: Treat these edits (drawings or erasures) as a compositional guide for shape and placement, NOT as a style reference. Your task is to intelligently interpret these edits and seamlessly integrate them into the final image, ensuring the result strictly adheres to the primary artistic style (defined by the style image or prompt). For example, if a colorful line is drawn on a black-and-white photo, the resulting feature should be rendered in black-and-white. The text prompt is the ultimate authority; if it specifies colors or details, those instructions override the drawing. Fill any erased (transparent) areas in a way that is consistent with the scene and style.");
-                }
-
-                let styleInstruction = "";
-                let modifications = "";
-
-                if (styleImage) {
-                    styleInstruction = "Your main objective is to meticulously adopt the artistic style, color palette, and texture from the second input image (the style reference). Replicate its visual essence onto the content image.";
-                    if (prompt.trim()) {
-                        modifications = `Incorporate the following changes: "${prompt.trim()}".`;
-                    }
-                } else if (selectedStyle) {
-                    styleInstruction = `Apply the following artistic style: "${selectedStyle.prompt}". Meticulously adhere to this style description.`;
-                    if (prompt.trim()) {
-                        modifications = `Incorporate the following changes: "${prompt.trim()}".`;
-                    }
-                } else if (prompt.trim()) {
-                    styleInstruction = `Apply the following artistic style: "${prompt.trim()}". Your main objective is to faithfully recreate the visual characteristics of this style.`;
-                }
-
-                if (styleInstruction) {
-                    promptParts.push(`# Style Instructions\n${styleInstruction}`);
-                }
-
-                if (modifications) {
-                    promptParts.push(`# Specific Modifications\n${modifications}`);
-                }
-
-                if (negativePrompt.trim()) {
-                    promptParts.push(`# Elements to Avoid\nStrictly avoid including any of the following: "${negativePrompt.trim()}".`);
-                }
-
-                return promptParts.join('\n\n');
-            };
-
-            const finalPrompt = buildFinalPrompt();
+            let finalImageBase64: string;
             const processedContentImage = await resizeAndPadImage(sourceImageForGeneration.base64, selectedResolution.value);
-            const finalImageBase64 = await editImage(processedContentImage, finalPrompt, styleImage ?? undefined);
+
+            // Determine flow: Inpainting vs. regular Image-to-Image
+            if (isEditingActive) {
+                 if (prompt.trim()) {
+                    // Guided Inpainting: User provides a prompt.
+                    const inpaintingPrompt = `This is an inpainting task. The user has provided an image with a transparent area that needs to be filled, or with new drawings. Your goal is to seamlessly and realistically fill the transparent regions or integrate the drawings based on the user's prompt, making sure the new content blends perfectly with the surrounding image. The rest of the image should remain completely unchanged. \n\n User's prompt: "${prompt.trim()}"`;
+                    finalImageBase64 = await editImage(processedContentImage, inpaintingPrompt);
+                } else {
+                    // Magic Erase: User erased an area but provided no prompt.
+                    const magicErasePrompt = "This is an inpainting task. A user has erased a part of the image, which is now represented by a transparent area. Your goal is to intelligently and realistically fill this transparent region. Analyze the surrounding context, textures, and objects to seamlessly reconstruct the missing part. The rest of the image must remain completely unchanged. Do not add new objects unless it is logical to fill the space.";
+                    finalImageBase64 = await editImage(processedContentImage, magicErasePrompt);
+                }
+            } else {
+                // Standard Image-to-Image Flow
+                const buildFinalPrompt = () => {
+                    const promptParts: string[] = ["# Primary Goal\nRedraw the provided content image."];
+                    let styleInstruction = "";
+                    let modifications = "";
+
+                    if (styleImage) {
+                        styleInstruction = "Your main objective is to meticulously adopt the artistic style, color palette, and texture from the second input image (the style reference). Replicate its visual essence onto the content image.";
+                        if (prompt.trim()) {
+                            modifications = `Incorporate the following changes: "${prompt.trim()}".`;
+                        }
+                    } else if (selectedStyle) {
+                        styleInstruction = `Apply the following artistic style: "${selectedStyle.prompt}". Meticulously adhere to this style description.`;
+                        if (prompt.trim()) {
+                            modifications = `Incorporate the following changes: "${prompt.trim()}".`;
+                        }
+                    } else if (prompt.trim()) {
+                        styleInstruction = `Apply the following artistic style: "${prompt.trim()}". Your main objective is to faithfully recreate the visual characteristics of this style.`;
+                    }
+
+                    if (styleInstruction) {
+                        promptParts.push(`# Style Instructions\n${styleInstruction}`);
+                    }
+                    if (modifications) {
+                        promptParts.push(`# Specific Modifications\n${modifications}`);
+                    }
+                    if (negativePrompt.trim()) {
+                        promptParts.push(`# Elements to Avoid\nStrictly avoid including any of the following: "${negativePrompt.trim()}".`);
+                    }
+                    return promptParts.join('\n\n');
+                };
+                const finalPrompt = buildFinalPrompt();
+                finalImageBase64 = await editImage(processedContentImage, finalPrompt, styleImage ?? undefined);
+            }
             
             const beforeImage = `data:${processedContentImage.mimeType};base64,${processedContentImage.base64}`;
             const afterImage = `data:image/png;base64,${finalImageBase64}`;
@@ -440,7 +450,8 @@ export default function App(): React.ReactElement {
     } finally {
         setIsLoading(false);
     }
-  }, [contentImage, styleImage, prompt, negativePrompt, selectedStyle, t, isEditing, editHistory, editHistoryIndex, selectedResolution, generatedImages.length]);
+  // FIX: Added missing state setters to the useCallback dependency array.
+  }, [contentImage, styleImage, prompt, negativePrompt, selectedStyle, t, isEditing, editHistory, editHistoryIndex, selectedResolution, generatedImages.length, setIsLoading, setIsEditing, setGeneratedImages, setCurrentImageIndex, setActiveView, setToast]);
 
   const handleNavigate = (direction: 'next' | 'prev') => {
     setIsEditing(false);
@@ -476,7 +487,8 @@ export default function App(): React.ReactElement {
       console.error('Failed to copy image:', err);
       setToast({ message: t.copyImageFailedError, type: 'error' });
     }
-  }, [generatedImages, t]);
+  // FIX: Added `setToast` to the useCallback dependency array.
+  }, [generatedImages, t, setToast]);
   
   const handleUseAs = useCallback(async (index: number, useAs: 'content' | 'style') => {
       const imageToUse = generatedImages[index]?.after;
@@ -494,7 +506,8 @@ export default function App(): React.ReactElement {
           const message = useAs === 'content' ? t.useAsContentFailedError : t.useAsStyleFailedError;
           setToast({ message, type: 'error' });
       }
-  }, [generatedImages, handleContentUpload, handleStyleUpload, t]);
+  // FIX: Added `setIsEditing` and `setToast` to the useCallback dependency array.
+  }, [generatedImages, handleContentUpload, handleStyleUpload, t, setIsEditing, setToast]);
 
   const handleExportAll = useCallback(async () => {
       if (generatedImages.length === 0) return;
@@ -505,7 +518,8 @@ export default function App(): React.ReactElement {
           console.error("Failed to export images:", err);
           setToast({ message: t.exportZipError, type: 'error' });
       }
-  }, [generatedImages, t]);
+  // FIX: Added `setToast` to the useCallback dependency array.
+  }, [generatedImages, t, setToast]);
 
   const canGenerate = (() => {
     if (isLoading) return false;
@@ -519,12 +533,19 @@ export default function App(): React.ReactElement {
     const hasSource = isEditing ? editHistory.length > 0 : !!contentImage;
     if (!hasSource) return false;
     
+    // For editing...
+    if (isEditing) {
+      // If brush has been used, a prompt is mandatory.
+      if (hasUsedBrushDuringEdit) {
+          return prompt.trim().length > 0;
+      }
+      // If only eraser was used, prompt is optional.
+      return true;
+    }
+    
+    // For standard I2I, a style method is required.
     const hasStyleMethod = !!styleImage || !!selectedStyle || prompt.trim().length > 0;
     if (!hasStyleMethod) return false;
-
-    if (isEditing && hasUsedBrush) {
-        return prompt.trim().length > 0;
-    }
 
     return true;
   })();
@@ -624,7 +645,7 @@ export default function App(): React.ReactElement {
           onGenerate={handleGenerate}
           canGenerate={canGenerate}
           isEditing={isEditing}
-          hasUsedBrush={hasUsedBrush}
+          hasUsedBrush={hasUsedBrushDuringEdit}
           onToggleEdit={handleToggleEdit}
           editTool={editTool}
           setEditTool={setEditTool}

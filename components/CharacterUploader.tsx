@@ -63,7 +63,6 @@ export const CharacterUploader: React.FC<CharacterUploaderProps> = ({ onImageUpl
             <p className="text-sm font-medium text-slate-700 truncate">{characterFile.name}</p>
             <p className="text-xs text-slate-500">{`${(characterFile.size / 1024).toFixed(1)} KB`}</p>
           </div>
-          {/* FIX: Replaced non-existent translation key 'useAsReferenceTooltip' with 'removeImageTooltip' for the remove button's tooltip. */}
           <Tooltip text={t.removeImageTooltip}>
             <button 
               onClick={onRemove}

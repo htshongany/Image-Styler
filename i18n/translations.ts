@@ -46,7 +46,8 @@ export const translations = {
     mainPromptLabel: "Additional Prompt",
     mainPromptTooltip: "Describe your desired edits.",
     mainPromptPlaceholder: "e.g., more vibrant, add a hat, make it dark...",
-    mainPromptPlaceholderRequired: "Describe your drawing (required)",
+    mainPromptPlaceholderEraserOptional: "Describe changes, or leave blank to auto-fill erased areas.",
+    mainPromptPlaceholderBrushRequired: "Describe what you drew with the brush (required).",
     textToImagePlaceholder: "Describe the image you want to create...",
     negativePromptLabel: "Negative Prompt",
     negativePromptTooltip: "Things to avoid in the result.",
@@ -95,8 +96,6 @@ export const translations = {
       linkedinProfile: "LinkedIn Profile",
     },
 
-    // FIX: Add missing translations for unused components.
-    // FIX: Add missing translations for ResolutionSelector component.
     resolutionTitle: "Resolution",
     resolutionTooltip: "Select the aspect ratio for the generated image. The content image will be cropped to fit this ratio.",
     resolutions: {
@@ -169,7 +168,8 @@ export const translations = {
     mainPromptLabel: "Prompt Additionnel",
     mainPromptTooltip: "Décrivez les modifications souhaitées.",
     mainPromptPlaceholder: "Ex: plus vibrant, ajouter un chapeau, rendre plus sombre...",
-    mainPromptPlaceholderRequired: "Décrivez votre dessin (obligatoire)",
+    mainPromptPlaceholderEraserOptional: "Décrivez les changements, ou laissez vide pour remplir les zones effacées.",
+    mainPromptPlaceholderBrushRequired: "Décrivez ce que vous avez dessiné avec le pinceau (obligatoire).",
     textToImagePlaceholder: "Décrivez l'image que vous souhaitez créer...",
     negativePromptLabel: "Prompt Négatif",
     negativePromptTooltip: "Éléments à éviter dans le résultat.",
@@ -218,8 +218,6 @@ export const translations = {
       linkedinProfile: "Profil LinkedIn",
     },
 
-    // FIX: Add missing translations for unused components.
-    // FIX: Add missing translations for ResolutionSelector component.
     resolutionTitle: "Résolution",
     resolutionTooltip: "Sélectionnez le rapport d'aspect pour l'image générée. L'image de contenu sera rognée pour s'adapter à ce rapport.",
     resolutions: {

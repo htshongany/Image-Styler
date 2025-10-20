@@ -15,7 +15,7 @@ interface ImageDisplayProps {
   editTool: 'brush' | 'eraser';
   brushSize: number;
   brushColor: string;
-  onCanvasUpdate: (dataUrl: string, toolUsed: 'brush' | 'eraser') => void;
+  onCanvasUpdate: (dataUrl: string) => void;
 }
 
 const LocalLoader: React.FC = () => {
@@ -169,7 +169,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({
     isDrawing.current = false;
     lastPos.current = null;
     if (canvasRef.current) {
-        onCanvasUpdate(canvasRef.current.toDataURL('image/png'), editTool);
+        onCanvasUpdate(canvasRef.current.toDataURL('image/png'));
     }
   };
 

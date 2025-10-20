@@ -1,7 +1,6 @@
 import React, { useState, useId } from 'react';
 
 interface TooltipProps {
-  // FIX: Changed children type from React.ReactNode to React.ReactElement to ensure it's a cloneable element, which resolves the overload error on React.cloneElement.
   children: React.ReactElement;
   text: string;
   position?: 'top' | 'bottom' | 'left' | 'right';
@@ -37,7 +36,6 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, text, position = 'to
       onFocusCapture={() => setIsVisible(true)}
       onBlurCapture={() => setIsVisible(false)}
     >
-      {/* FIX: Explicitly provide a generic type argument to React.cloneElement to ensure the props object is correctly typed, resolving an overload error with the 'aria-describedby' attribute. */}
       {React.cloneElement<React.HTMLAttributes<HTMLElement>>(children, { 'aria-describedby': tooltipId })}
       <div
         id={tooltipId}

@@ -12,7 +12,6 @@ export interface DefaultStyle {
   prompt: string;
 }
 
-// FIX: Add missing Pose and Expression types for unused components.
 export interface Pose {
   id: string;
   icon: React.FC<{className?: string}>;
